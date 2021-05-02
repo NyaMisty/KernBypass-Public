@@ -153,7 +153,7 @@ extern const mach_port_t kIOMasterPortDefault;
 static kread_func_t kread_buf;
 task_t tfp0 = TASK_NULL;
 static kwrite_func_t kwrite_buf;
-kaddr_t kbase, kslide, this_proc, our_task, allproc;
+kaddr_t p_kbase, p_kslide, this_proc, our_task, allproc;
 static kaddr_t kernproc;
 static size_t proc_task_off, proc_p_pid_off, task_itk_space_off, io_dt_nvram_of_dict_off;
 
@@ -635,8 +635,8 @@ pfinder_init_kbase(pfinder_t *pfinder) {
 		pfinder->sec_text.s64.addr += pfinder->kslide;
 		pfinder->sec_cstring.s64.addr += pfinder->kslide;
 		printf("kbase: " KADDR_FMT ", kslide: " KADDR_FMT "\n", pfinder->base + pfinder->kslide, pfinder->kslide);
-		kbase = pfinder->base + pfinder->kslide;
-		kslide = pfinder->kslide;
+		p_kbase = pfinder->base + pfinder->kslide;
+		p_kslide = pfinder->kslide;
 		return KERN_SUCCESS;
 	}
 	return KERN_FAILURE;
@@ -713,7 +713,10 @@ pfinder_init_offsets(void) {
 	if((boot_path = get_boot_path()) != NULL) {
 		printf("boot_path: %s\n", boot_path);
 		if(pfinder_init_file(&pfinder, boot_path) == KERN_SUCCESS) {
-			pfinder.kslide = kslide;
+			//pfinder.kslide = kslide;
+			pfinder.kslide = p_kbase - pfinder.base;
+			if (pfinder.kslide)
+				printf("got predefined kslide: %llx\n", pfinder.kslide);
 			if(pfinder_init_kbase(&pfinder) == KERN_SUCCESS && (kernproc = pfinder_kernproc(pfinder)) != 0) {
 				printf("kernproc: " KADDR_FMT "\n", kernproc);
 				if((allproc = pfinder_allproc(pfinder)) != 0) {
@@ -925,8 +928,8 @@ dimentio_term(void) {
 }
 
 kern_return_t
-dimentio_init(kaddr_t _kslide, kread_func_t _kread_buf, kwrite_func_t _kwrite_buf) {
-	kslide = _kslide;
+dimentio_init(kaddr_t _kbase, kread_func_t _kread_buf, kwrite_func_t _kwrite_buf) {
+	p_kbase = _kbase;
 	if(_kread_buf != NULL && _kwrite_buf != NULL) {
 		kread_buf = _kread_buf;
 		kwrite_buf = _kwrite_buf;

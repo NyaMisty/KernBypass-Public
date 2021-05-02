@@ -28,7 +28,7 @@ static kwrite_func_t kwrite_buf;
 static size_t proc_p_pid_off;
 static size_t proc_task_off;
 task_t tfp0;
-kaddr_t kbase, kslide, this_proc, our_task, allproc;
+kaddr_t p_kbase, p_kslide, this_proc, our_task, allproc;
 
 void
 dimentio_term(void);

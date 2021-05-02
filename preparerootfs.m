@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "config.h"
-#include "kernel.h"
+#include "kernelhelper/kernel.h"
 #include "vnode_utils.h"
 #include "utils.h"
 
@@ -11,13 +11,41 @@
 #include <sys/snapshot.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
+
+#if defined(USE_DEV_FAKEVAR) 
+#define FAKEVARDIR "/var/mobile/kernbypass_assetfakevar"
+#define FINAL_FAKEVARDIR FAKEROOTDIR"/dev/fakevar"
+#elif defined(USE_TMPFS_FAKEVAR)
+#define FAKEVARDIR "/var/mobile/kernbypass_asset/fakevar"
+#define FINAL_FAKEVARDIR FAKEROOTDIR"/private/var"
+#elif defined(USE_DMG)
+#define FAKEVAR_DMG "/var/mobile/kernbypass_asset/test.dmg"
+#define FINAL_FAKEVARDIR FAKEROOTDIR"/private/var"
+#else
+#error "SPECIFY FAKEVAR METHOD!"
+#endif
 
 void hardlink_var(const char *path) {
     char src[1024];
     const char *relapath = path + strlen(FINAL_FAKEVARDIR);
     snprintf(src, sizeof(src), "/private/var/%s", relapath);
     printf("Linking: %s -> %s\n", src, path);
-    copy_file_in_memory((char *)path, src, true);
+    //copy_file_in_memory((char *)path, src, true);
+    char mountcmd[2048] = {0};
+    snprintf(mountcmd, sizeof(mountcmd), "mount_bindfs '%s' '%s'", src, path);
+    printf("   exec: %s\n", mountcmd);
+    system(mountcmd);
+    //force_set_rw(path);
+}
+
+void symlink_var(const char *path) {
+    char src[1024];
+    const char *relapath = path + strlen(FINAL_FAKEVARDIR);
+    snprintf(src, sizeof(src), "/private/var/%s", relapath);
+    printf("Linking: %s -> %s\n", src, path);
+    printf("    rmdir: %d, errno: %d\n", rmdir(path), errno);
+    printf("    symlink: %d, errno: %d\n", symlink(src, path), errno);
 }
 
 void listdir(const char *name, int indent) {
@@ -37,9 +65,16 @@ void listdir(const char *name, int indent) {
             listdir(path, indent + 2);
             childs += 1;
         } else {
+/*
+#ifdef USE_HARDLINK
             hardlink_var(path);
+#else
+            symlink_var(path);
+#endif
             printf("%*s- %s\n", indent, "", entry->d_name);
             childs += 1;
+*/
+            continue;
         }
     }
     if (childs == 0) {
@@ -47,12 +82,17 @@ void listdir(const char *name, int indent) {
             printf("FATAL! Empty fakevar root!!\n");
             return;
         }
+#ifdef USE_HARDLINK
         hardlink_var(name);
+#else
+        symlink_var(name);
+#endif
     }
     closedir(dir);
 }
 
-#ifndef USE_DEV_FAKEVAR
+
+#if defined(USE_DMG)
 
 int mount_dmg(const char *mountpoint) {
     printf("attaching our fakevar dmg %s\n", FAKEVAR_DMG);
@@ -126,14 +166,12 @@ int link_folders() {
     return 0;
 }
 
-#else
-
+#elif defined(USE_DEV_FAKEVAR)
 int link_folders() {
     printf("Copyiny fakevar dir from: %s\n", FAKEVARDIR);
     if (copy_dir(FAKEVARDIR, FINAL_FAKEVARDIR)) {
         return 1;
     }
-
     printf("Linking fakevar dir!\n");
     listdir(FINAL_FAKEVARDIR, 0);
     
@@ -142,7 +180,36 @@ int link_folders() {
     return 0;
 }
 
+#elif defined(USE_TMPFS_FAKEVAR)
+int mount_tmpfs(const char *mountpoint) {
+    char command[1000] = {0};
+    snprintf(command, sizeof(command), "mount_tmpfs %s", mountpoint);
+    printf("Executing command: %s\n", command);
+    int err = system(command);
+    if (err != 0) {
+        printf("mount tmpfs error = %d\n", err);
+        return 1;
+    }
+    return 0;
+}
+
+int link_folders() {
+    if (mount_tmpfs(FINAL_FAKEVARDIR) != 0) {
+        printf("mount tmpfs fail!\n");
+        return 1;
+    }
+    if (copy_dir(FAKEVARDIR, FINAL_FAKEVARDIR)) {
+        return 1;
+    }
+    listdir(FINAL_FAKEVARDIR, 0);
+    //listdir(FAKEVARDIR, 0);
+    return 0;
+}
+
+#else
+    #error "Specify a fakevar method!"
 #endif
+
 
 int main(int argc, char *argv[], char *envp[]) {
     

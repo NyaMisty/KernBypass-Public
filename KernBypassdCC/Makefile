@@ -1,6 +1,6 @@
 ARCHS = arm64 arm64e
 
-TARGET = iphone:14.0:12.0
+#TARGET = iphone:14.3:12.0
 
 BUNDLE_NAME = KernBypassdCC
 $(BUNDLE_NAME)_FILES = Switch.x

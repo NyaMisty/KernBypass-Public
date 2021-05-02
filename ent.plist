@@ -8,6 +8,8 @@
 	<true/>
 	<key>com.apple.private.apfs.revert-to-snapshot</key>
 	<true/>
+	<key>com.apple.private.diskimages.kext.user-client-access</key>
+	<true/>
 	<key>get-task-allow</key>
 	<true/>
 	<key>proc_info-allow</key>
@@ -20,5 +22,16 @@
 	<true/>
 	<key>com.apple.private.kernel.get-kext-info</key>
 	<true/>
+
+	<key>com.apple.private.security.no-container</key>
+	<true/>
+
+	<key>com.apple.security.iokit-user-client-class</key>
+	<array>
+		<string>iokit-open</string>
+		<string>AGXDeviceUserClient</string>
+		<string>IOHDIXControllerUserClient</string>
+		<string>IOSurfaceRootUserClient</string>
+	</array>
 </dict>
 </plist>

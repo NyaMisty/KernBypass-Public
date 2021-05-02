@@ -1,5 +1,8 @@
+#import <CoreFoundation/CoreFoundation.h>
+#import <Foundation/Foundation.h>
 #include <spawn.h>
 #import <dlfcn.h>
+#include <sys/wait.h>
 #import <sys/sysctl.h>
 #include "../config.h"
 

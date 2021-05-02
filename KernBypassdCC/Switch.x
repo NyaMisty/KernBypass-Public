@@ -1,7 +1,7 @@
-#import "headers/ControlCenterUIKit/CCUIToggleModule.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <firmware.h>
+#import "headers/ControlCenterUIKit/CCUIToggleModule.h"
+#import "../firmware.h"
 #include <spawn.h>
 #include "../config.h"
 
@@ -177,9 +177,9 @@ static void openSettings() {
     easy_spawn((const char *[]){"/usr/bin/kernbypassd", NULL});
 
     // Close ControlCenter
-    if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber_iOS_13_0_beta1 && [[%c(SBControlCenterController) sharedInstance] isPresentedOrDismissing]) {
+    if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber_iOS_13_0 && [[%c(SBControlCenterController) sharedInstance] isPresentedOrDismissing]) {
         [[%c(SBControlCenterController) sharedInstance] dismissAnimated:YES];
-    } else if (kCFCoreFoundationVersionNumber < kCFCoreFoundationVersionNumber_iOS_13_0_beta1 && [[%c(SBControlCenterController) sharedInstance] isVisible]) {
+    } else if (kCFCoreFoundationVersionNumber < kCFCoreFoundationVersionNumber_iOS_13_0 && [[%c(SBControlCenterController) sharedInstance] isVisible]) {
         [[%c(SBControlCenterController) sharedInstance] dismissAnimated:YES];
     }
     

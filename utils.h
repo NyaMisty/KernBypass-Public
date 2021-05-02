@@ -45,7 +45,7 @@ void oops(const char *msg, char *s2) {
     perror(s2);
 }
 
-int copyFiles(char *source, char *destination) {
+/*int copyFiles(char *source, char *destination) {
     int in_fd, out_fd, n_chars;
     char buf[BUFFERSIZE];
 
@@ -118,5 +118,13 @@ int copy_dir(const char *name, const char *target) {
     if (child == 0) {
         return 1;
     }
+    return 0;
+}*/
+
+int copy_dir(const char *name, const char *target) {
+    char comm[0x300] = {0};
+    sprintf(comm, "cp -Ra \"%s/.\" \"%s\"", name, target);
+    printf("   exec: %s\n", comm);
+    system(comm);
     return 0;
 }
